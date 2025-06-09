@@ -126,20 +126,15 @@ $("#table_cmd").sortable({
 
 /* Fonction permettant l'affichage des commandes dans l'équipement */
 function addCmdToTable(_cmd) {
-  // Sécurise _cmd et ses sous-objets
-  if (!_cmd || typeof _cmd !== 'object') {
-    console.warn('Commande invalide reçue:', _cmd);
-    return;
+  if (!isset(_cmd)) {
+    var _cmd = { configuration: {} };
   }
-  if (!_cmd.configuration) {
+  if (!isset(_cmd.configuration)) {
     _cmd.configuration = {};
-  }
-  if (!_cmd.display) {
-    _cmd.display = {};
   }
 
   // Construction de la ligne HTML
-  var tr = '<tr class="cmd" data-cmd_id="' + _cmd.id + '">';
+  var tr = '<tr class="cmd" data-cmd_id="' + init(_cmd.id) + '">';
 
   // ID (hidden)
   tr += '<td class="hidden-xs">';
@@ -160,22 +155,12 @@ function addCmdToTable(_cmd) {
   tr += '</select>';
   tr += '</td>';
 
-  // Type / Subtype
-  tr += '<td>';
-  tr += '<span class="type" type="' + (_cmd.type || '') + '">' + jeedom.cmd.availableType(_cmd.type) + '</span>';
-  tr += '<span class="subType" subType="' + (_cmd.subType || '') + '"></span>';
-  tr += '</td>';
 
   // Options: visible, historisé, inversé + min/max/unité
   tr += '<td>';
   tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isVisible" ' + (_cmd.isVisible == '1' ? 'checked' : '') + '>Afficher</label> ';
   tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isHistorized" ' + (_cmd.isHistorized == '1' ? 'checked' : '') + '>Historiser</label> ';
   tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="display" data-l2key="invertBinary" ' + ((_cmd.display && _cmd.display.invertBinary) ? 'checked' : '') + '>Inverser</label> ';
-  tr += '<div style="margin-top:7px;">';
-  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="minValue" placeholder="Min" title="Min" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;" value="' + ((_cmd.configuration.minValue !== undefined) ? _cmd.configuration.minValue : '') + '">';
-  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="maxValue" placeholder="Max" title="Max" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;" value="' + ((_cmd.configuration.maxValue !== undefined) ? _cmd.configuration.maxValue : '') + '">';
-  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="unite" placeholder="Unité" title="Unité" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;" value="' + (_cmd.unite || '') + '">';
-  tr += '</div>';
   tr += '</td>';
 
   // Etat HTML (affichage dynamique)
@@ -183,9 +168,9 @@ function addCmdToTable(_cmd) {
 
   // Boutons config/test/suppression
   tr += '<td>';
-  if (!isNaN(parseInt(_cmd.id))) {
+  if (is_numeric(_cmd.id)) {
     tr += '<a class="btn btn-default btn-xs cmdAction" data-action="configure"><i class="fas fa-cogs"></i></a> ';
-    tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fas fa-rss"></i> Tester</a> ';
+    tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fas fa-rss"></i> Tester</a>';
   }
   tr += '<i class="fas fa-minus-circle pull-right cmdAction cursor" data-action="remove" title="Supprimer la commande"></i>';
   tr += '</td>';
@@ -200,7 +185,7 @@ function addCmdToTable(_cmd) {
 
   // Remplissage dynamique de la liste des commandes liées (pour select)
   jeedom.eqLogic.buildSelectCmd({
-    id: $('.eqLogicAttr[data-l1key=id]').val(),
+    id: $('.eqLogicAttr[data-l1key=id]').value(),
     filter: { type: 'info' },
     error: function (error) {
       $('#div_alert').showAlert({ message: error.message, level: 'danger' });
@@ -208,7 +193,7 @@ function addCmdToTable(_cmd) {
     success: function (result) {
       $tr.find('.cmdAttr[data-l1key=value]').append(result);
       $tr.setValues(_cmd, '.cmdAttr');
-      jeedom.cmd.changeType($tr, _cmd.subType || '');
+      jeedom.cmd.changeType($tr, init(_cmd.subType ));
     }
   });
 

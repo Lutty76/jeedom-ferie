@@ -3,8 +3,9 @@
 if (!isConnect('admin')) {
     throw new Exception(__('401 - Accès non autorisé', __FILE__));
 }
-include_file('desktop', 'jourferie', 'js', 'jourferie');
 include_file('core', 'cmd', 'js');
+include_file('core', 'plugin.template', 'js');
+include_file('desktop', 'jourferie', 'js', 'jourferie');
 sendVarToJS('eqType', 'jourferie');
 $eqLogics = eqLogic::byType('jourferie');
 ?>
@@ -141,7 +142,6 @@ $eqLogics = eqLogic::byType('jourferie');
             <tr>
               <th style="width: 50px;">#</th>
               <th style="width: 300px;">{{Nom}}</th>
-              <th style="width: 200px;">{{Type}}</th>
               <th style="width: 300px;">{{Options}}</th>
               <th style="width: 150px;">{{État}}</th>
               <th style="width: 150px;">{{Action}}</th>
