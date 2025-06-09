@@ -1,0 +1,23 @@
+{
+	"id": "jourferie",
+	"name": "Jour Férié & Vacances",
+	"pluginVersion": "0.1",
+	"description": "Plugin pour vérifier si aujourd'hui est un jour férié ou une période de vacances.",
+	"license": "AGPL",
+	"author": "Lutty",
+	"require": "4.2",
+	"category": "organization",
+	"hasDependency": false,
+	"hasOwnDeamon": false,
+	"maxDependancyInstallTime": 0,
+	"language": "",
+	"compatibility": "",
+	"update": {
+		"configuration": true
+	},
+	"include": {
+		"file": "jourferie",
+		"type": "class"
+	}
+
+}
