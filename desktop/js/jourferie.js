@@ -13,6 +13,106 @@
 * You should have received a copy of the GNU General Public License
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
+var eqType = 'jourferie';
+
+// Gestion de l'ajout d'un équipement
+$(document).on('click', '.addEqLogic', function () {
+  var _eqLogic = {type: eqType};
+  bootbox.prompt("{{Nom de l'équipement}}", function (result) {
+    if (result !== null) {
+      _eqLogic.name = result;
+      jeedom.eqLogic.save({
+        type: eqType,
+        eqLogics: [_eqLogic],
+        error: function (error) {
+          $('#div_alert').showAlert({message: error.message, level: 'danger'});
+        },
+        success: function (data) {
+          var vars = getUrlVars();
+          var url = 'index.php?';
+          for (var i in vars) {
+            if (i != 'id' && i != 'saveSuccessFull' && i != 'removeSuccessFull') {
+              url += i + '=' + vars[i] + '&';
+            }
+          }
+          url += 'id=' + data.id + '&saveSuccessFull=1';
+          loadPage(url);
+        }
+      });
+    }
+  });
+});
+
+// Gestion du clic sur un équipement existant
+$(document).on('click', '.eqLogicDisplayCard', function () {
+  if (!$(this).hasClass('addEqLogic')) {
+    var id = $(this).attr('data-eqLogic_id');
+    $('.eqLogicThumbnailDisplay').hide();
+    $('.eqLogic').show();
+    jeedom.eqLogic.cache.getCmd = Array();
+    if (id == '') {
+      $('.eqLogic').empty();
+      return;
+    }
+    jeedom.eqLogic.byId({
+      id: id,
+      error: function (error) {
+        $('#div_alert').showAlert({message: error.message, level: 'danger'});
+      },
+      success: function (data) {
+        $('.eqLogic').setValues(data, '.eqLogicAttr');
+        jeedom.cmd.displayActionsOption({
+          params: {
+            eqLogic_id: id
+          }
+        });
+        $('.eqLogicAction[data-action=returnToThumbnailDisplay]').show();
+
+        // Chargement des commandes
+        loadCmdsByEqLogicId(id)
+
+      }
+    });
+  }
+});
+
+// Gestion des actions sur les équipements
+$(document).on('click', '.eqLogicAction[data-action=returnToThumbnailDisplay]', function () {
+  $('.eqLogic').hide();
+  $('.eqLogicThumbnailDisplay').show();
+});
+
+$(document).on('click', '.eqLogicAction[data-action=save]', function () {
+  var eqLogic = $('.eqLogic').getValues('.eqLogicAttr')[0];
+  jeedom.eqLogic.save({
+    type: eqType,
+    eqLogics: [eqLogic],
+    error: function (error) {
+      $('#div_alert').showAlert({message: error.message, level: 'danger'});
+    },
+    success: function (data) {
+      $('.eqLogic').hide();
+      $('.eqLogicThumbnailDisplay').show();
+      window.location.reload();
+    }
+  });
+});
+
+$(document).on('click', '.eqLogicAction[data-action=remove]', function () {
+  var eqLogic = $('.eqLogic').getValues('.eqLogicAttr')[0];
+  jeedom.eqLogic.remove({
+    type: eqType,
+    id: eqLogic.id,
+    error: function (error) {
+      $('#div_alert').showAlert({message: error.message, level: 'danger'});
+    },
+    success: function () {
+      $('.eqLogic').hide();
+      $('.eqLogicThumbnailDisplay').show();
+      window.location.reload();
+    }
+  });
+});
 
 /* Permet la réorganisation des commandes dans l'équipement */
 $("#table_cmd").sortable({
@@ -26,62 +126,138 @@ $("#table_cmd").sortable({
 
 /* Fonction permettant l'affichage des commandes dans l'équipement */
 function addCmdToTable(_cmd) {
-  if (!isset(_cmd)) {
-    var _cmd = { configuration: {} }
+  // Sécurise _cmd et ses sous-objets
+  if (!_cmd || typeof _cmd !== 'object') {
+    console.warn('Commande invalide reçue:', _cmd);
+    return;
   }
-  if (!isset(_cmd.configuration)) {
-    _cmd.configuration = {}
+  if (!_cmd.configuration) {
+    _cmd.configuration = {};
   }
-  var tr = '<tr class="cmd" data-cmd_id="' + init(_cmd.id) + '">'
-  tr += '<td class="hidden-xs">'
-  tr += '<span class="cmdAttr" data-l1key="id"></span>'
-  tr += '</td>'
-  tr += '<td>'
-  tr += '<div class="input-group">'
-  tr += '<input class="cmdAttr form-control input-sm roundedLeft" data-l1key="name" placeholder="{{Nom de la commande}}">'
-  tr += '<span class="input-group-btn"><a class="cmdAction btn btn-sm btn-default" data-l1key="chooseIcon" title="{{Choisir une icône}}"><i class="fas fa-icons"></i></a></span>'
-  tr += '<span class="cmdAttr input-group-addon roundedRight" data-l1key="display" data-l2key="icon" style="font-size:19px;padding:0 5px 0 0!important;"></span>'
-  tr += '</div>'
-  tr += '<select class="cmdAttr form-control input-sm" data-l1key="value" style="display:none;margin-top:5px;" title="{{Commande info liée}}">'
-  tr += '<option value="">{{Aucune}}</option>'
-  tr += '</select>'
-  tr += '</td>'
-  tr += '<td>'
-  tr += '<span class="type" type="' + init(_cmd.type) + '">' + jeedom.cmd.availableType() + '</span>'
-  tr += '<span class="subType" subType="' + init(_cmd.subType) + '"></span>'
-  tr += '</td>'
-  tr += '<td>'
-  tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isVisible" checked/>{{Afficher}}</label> '
-  tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isHistorized" checked/>{{Historiser}}</label> '
-  tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="display" data-l2key="invertBinary"/>{{Inverser}}</label> '
-  tr += '<div style="margin-top:7px;">'
-  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="minValue" placeholder="{{Min}}" title="{{Min}}" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;">'
-  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="maxValue" placeholder="{{Max}}" title="{{Max}}" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;">'
-  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="unite" placeholder="Unité" title="{{Unité}}" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;">'
-  tr += '</div>'
-  tr += '</td>'
-  tr += '<td>';
-  tr += '<span class="cmdAttr" data-l1key="htmlstate"></span>';
+  if (!_cmd.display) {
+    _cmd.display = {};
+  }
+
+  // Construction de la ligne HTML
+  var tr = '<tr class="cmd" data-cmd_id="' + _cmd.id + '">';
+
+  // ID (hidden)
+  tr += '<td class="hidden-xs">';
+  tr += '<span class="cmdAttr" data-l1key="id">' + _cmd.id + '</span>';
   tr += '</td>';
-  tr += '<td>'
-  if (is_numeric(_cmd.id)) {
-    tr += '<a class="btn btn-default btn-xs cmdAction" data-action="configure"><i class="fas fa-cogs"></i></a> '
-    tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fas fa-rss"></i> {{Tester}}</a>'
+
+  // Nom + icône
+  tr += '<td>';
+  tr += '<div class="input-group">';
+  tr += '<input class="cmdAttr form-control input-sm roundedLeft" data-l1key="name" value="' + htmlspecialchars(_cmd.name || '') + '" placeholder="Nom de la commande">';
+  tr += '<span class="input-group-btn"><a class="cmdAction btn btn-sm btn-default" data-l1key="chooseIcon" title="Choisir une icône"><i class="fas fa-icons"></i></a></span>';
+  tr += '<span class="cmdAttr input-group-addon roundedRight" data-l1key="display" data-l2key="icon" style="font-size:19px;padding:0 5px 0 0!important;">' + (_cmd.display.icon || '') + '</span>';
+  tr += '</div>';
+
+  // Select valeur (vide pour l'instant)
+  tr += '<select class="cmdAttr form-control input-sm" data-l1key="value" style="display:none;margin-top:5px;" title="Commande info liée">';
+  tr += '<option value="">{{Aucune}}</option>';
+  tr += '</select>';
+  tr += '</td>';
+
+  // Type / Subtype
+  tr += '<td>';
+  tr += '<span class="type" type="' + (_cmd.type || '') + '">' + jeedom.cmd.availableType(_cmd.type) + '</span>';
+  tr += '<span class="subType" subType="' + (_cmd.subType || '') + '"></span>';
+  tr += '</td>';
+
+  // Options: visible, historisé, inversé + min/max/unité
+  tr += '<td>';
+  tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isVisible" ' + (_cmd.isVisible == '1' ? 'checked' : '') + '>Afficher</label> ';
+  tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="isHistorized" ' + (_cmd.isHistorized == '1' ? 'checked' : '') + '>Historiser</label> ';
+  tr += '<label class="checkbox-inline"><input type="checkbox" class="cmdAttr" data-l1key="display" data-l2key="invertBinary" ' + ((_cmd.display && _cmd.display.invertBinary) ? 'checked' : '') + '>Inverser</label> ';
+  tr += '<div style="margin-top:7px;">';
+  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="minValue" placeholder="Min" title="Min" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;" value="' + ((_cmd.configuration.minValue !== undefined) ? _cmd.configuration.minValue : '') + '">';
+  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="maxValue" placeholder="Max" title="Max" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;" value="' + ((_cmd.configuration.maxValue !== undefined) ? _cmd.configuration.maxValue : '') + '">';
+  tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="unite" placeholder="Unité" title="Unité" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;" value="' + (_cmd.unite || '') + '">';
+  tr += '</div>';
+  tr += '</td>';
+
+  // Etat HTML (affichage dynamique)
+  tr += '<td><span class="cmdAttr" data-l1key="htmlstate"></span></td>';
+
+  // Boutons config/test/suppression
+  tr += '<td>';
+  if (!isNaN(parseInt(_cmd.id))) {
+    tr += '<a class="btn btn-default btn-xs cmdAction" data-action="configure"><i class="fas fa-cogs"></i></a> ';
+    tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fas fa-rss"></i> Tester</a> ';
   }
-  tr += '<i class="fas fa-minus-circle pull-right cmdAction cursor" data-action="remove" title="{{Supprimer la commande}}"></i></td>'
-  tr += '</tr>'
-  $('#table_cmd tbody').append(tr)
-  var tr = $('#table_cmd tbody tr').last()
+  tr += '<i class="fas fa-minus-circle pull-right cmdAction cursor" data-action="remove" title="Supprimer la commande"></i>';
+  tr += '</td>';
+
+  tr += '</tr>';
+
+  // Ajoute au tableau
+  $('#table_cmd tbody').append(tr);
+
+  // Récupère la dernière ligne créée
+  var $tr = $('#table_cmd tbody tr').last();
+
+  // Remplissage dynamique de la liste des commandes liées (pour select)
   jeedom.eqLogic.buildSelectCmd({
-    id: $('.eqLogicAttr[data-l1key=id]').value(),
+    id: $('.eqLogicAttr[data-l1key=id]').val(),
     filter: { type: 'info' },
     error: function (error) {
-      $('#div_alert').showAlert({ message: error.message, level: 'danger' })
+      $('#div_alert').showAlert({ message: error.message, level: 'danger' });
     },
     success: function (result) {
-      tr.find('.cmdAttr[data-l1key=value]').append(result)
-      tr.setValues(_cmd, '.cmdAttr')
-      jeedom.cmd.changeType(tr, init(_cmd.subType))
+      $tr.find('.cmdAttr[data-l1key=value]').append(result);
+      $tr.setValues(_cmd, '.cmdAttr');
+      jeedom.cmd.changeType($tr, _cmd.subType || '');
     }
-  })
+  });
+
+
+  // Récupérer l'état actuel de la commande
+  getCmdState(_cmd.id)
+}
+
+// Petite fonction d'échappement HTML (pour éviter les injections)
+function htmlspecialchars(str) {
+  if (!str) return '';
+  return str.replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+}
+function loadCmdsByEqLogicId(eqLogicId) {
+  $.ajax({
+    type: "POST",
+    url: "core/ajax/cmd.ajax.php",
+    data: { action: "byEqLogic", eqLogic_id: eqLogicId },
+    dataType: 'json',
+    success: function(response) {
+      if (response.state === 'ok') {
+        $('#table_cmd tbody').empty();
+        response.result.forEach(function(cmd) {
+          addCmdToTable(cmd);
+        });
+      } else {
+        $('#div_alert').showAlert({message: response.result, level: 'danger'});
+      }
+    },
+    error: function(xhr, status, error) {
+      $('#div_alert').showAlert({message: error, level: 'danger'});
+    }
+  });
+}
+
+function getCmdState(id){
+  jeedom.cmd.execute({
+    id: id,
+    success: function (result) {
+      $('#table_cmd tbody tr[data-cmd_id="' + id + '"] .cmdAttr[data-l1key=htmlstate]').html(result);
+    },
+    error: function (error) {
+      stateCell.html('Erreur');
+      console.error('Erreur de récupération de l\'état :', error);
+    }
+  });
+
 }

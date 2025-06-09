@@ -22,23 +22,29 @@ class jourferie extends eqLogic {
   /*     * *************************Attributs****************************** */
 
     public static function cronDaily() {
-        // Vérifie si c'est un jour férié
-        $isHoliday = self::isHoliday();
-        // Vérifie si c'est une période de vacances
-        $isVacation = self::isVacation();
-
         foreach (eqLogic::byType('jourferie') as $eqLogic) {
+            // Vérifie si c'est un jour férié pour cet équipement
+            $isHoliday = self::isHoliday($eqLogic);
+            // Vérifie si c'est une période de vacances pour cet équipement
+            $isVacation = self::isVacation($eqLogic);
+
             $eqLogic->checkAndUpdateCmd('isHoliday', $isHoliday);
             $eqLogic->checkAndUpdateCmd('isVacation', $isVacation);
         }
     }
 
-    private static function isHoliday() {
+    private static function isHoliday($eqLogic = null) {
         $year = date('Y');
         $today = date('Y-m-d');
 
-        // Récupérer la région configurée ou utiliser 'metropole' par défaut
-        $region = config::byKey('holidayRegion', 'jourferie', 'metropole');
+        // Récupérer la région configurée pour l'équipement ou utiliser la configuration globale
+        $region = 'metropole';
+        if ($eqLogic !== null && $eqLogic->getConfiguration('holidayRegion', '') != '') {
+            $region = $eqLogic->getConfiguration('holidayRegion');
+        } else {
+            $region = config::byKey('holidayRegion', 'jourferie', 'metropole');
+        }
+
         $url = "https://calendrier.api.gouv.fr/jours-feries/$region/$year.json";
 
         $json = file_get_contents($url);
@@ -51,13 +57,18 @@ class jourferie extends eqLogic {
         return in_array($today, array_keys($holidays)) ? 1 : 0;
     }
 
-    private static function isVacation() {
+    private static function isVacation($eqLogic = null) {
         $today = date('Y-m-d');
 
-        // Récupérer la zone académique configurée ou utiliser 'FR-IDF' (Zone C) par défaut
-        $academicZone = config::byKey('academicZone', 'jourferie', 'FR-IDF');
-        if (empty($academicZone)) {
-            $academicZone = 'FR-IDF'; // Zone C par défaut si non configuré
+        // Récupérer la zone académique configurée pour l'équipement ou utiliser la configuration globale
+        $academicZone = 'FR-IDF'; // Zone C par défaut
+        if ($eqLogic !== null && $eqLogic->getConfiguration('academicZone', '') != '') {
+            $academicZone = $eqLogic->getConfiguration('academicZone');
+        } else {
+            $academicZone = config::byKey('academicZone', 'jourferie', 'FR-IDF');
+            if (empty($academicZone)) {
+                $academicZone = 'FR-IDF'; // Zone C par défaut si non configuré
+            }
         }
 
         $url = "https://openholidaysapi.org/SchoolHolidays?countryIsoCode=FR&subdivisionCode=$academicZone&validFrom=$today&validTo=$today";
@@ -118,9 +129,9 @@ class jourferie extends eqLogic {
       $isVacationCmd->save();
     }
 
-    // Mise à jour immédiate des valeurs
-    $this->checkAndUpdateCmd('isHoliday', self::isHoliday());
-    $this->checkAndUpdateCmd('isVacation', self::isVacation());
+    // Mise à jour immédiate des valeurs en utilisant les configurations spécifiques à l'équipement
+    $this->checkAndUpdateCmd('isHoliday', self::isHoliday($this));
+    $this->checkAndUpdateCmd('isVacation', self::isVacation($this));
   }
 
   // Fonction exécutée automatiquement avant la suppression de l'équipement

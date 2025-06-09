@@ -24,40 +24,5 @@ if (!isConnect()) {
 ?>
 <form class="form-horizontal">
   <fieldset>
-    <div class="form-group">
-      <label class="col-md-4 control-label">{{Zone académique}}
-        <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez votre zone académique pour les vacances scolaires}}"></i></sup>
-      </label>
-      <div class="col-md-4">
-        <select class="configKey form-control" data-l1key="academicZone">
-          <option value="">{{Sélectionnez une zone}}</option>
-          <option value="FR-ARA">{{Zone A - Académies: Besançon, Bordeaux, Clermont-Ferrand, Dijon, Grenoble, Limoges, Lyon, Poitiers}}</option>
-          <option value="FR-OCC">{{Zone B - Académies: Aix-Marseille, Amiens, Caen, Lille, Nancy-Metz, Nantes, Nice, Orléans-Tours, Reims, Rennes, Rouen, Strasbourg}}</option>
-          <option value="FR-IDF">{{Zone C - Académies: Créteil, Montpellier, Paris, Toulouse, Versailles}}</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="col-md-4 control-label">{{Région pour jours fériés}}
-        <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez votre région pour les jours fériés}}"></i></sup>
-      </label>
-      <div class="col-md-4">
-        <select class="configKey form-control" data-l1key="holidayRegion">
-          <option value="metropole">{{Métropole}}</option>
-          <option value="alsace-moselle">{{Alsace-Moselle}}</option>
-          <option value="guadeloupe">{{Guadeloupe}}</option>
-          <option value="guyane">{{Guyane}}</option>
-          <option value="martinique">{{Martinique}}</option>
-          <option value="mayotte">{{Mayotte}}</option>
-          <option value="nouvelle-caledonie">{{Nouvelle-Calédonie}}</option>
-          <option value="polynesie-francaise">{{Polynésie française}}</option>
-          <option value="reunion">{{La Réunion}}</option>
-          <option value="saint-barthelemy">{{Saint-Barthélemy}}</option>
-          <option value="saint-martin">{{Saint-Martin}}</option>
-          <option value="saint-pierre-et-miquelon">{{Saint-Pierre-et-Miquelon}}</option>
-          <option value="wallis-et-futuna">{{Wallis-et-Futuna}}</option>
-        </select>
-      </div>
-    </div>
   </fieldset>
 </form>
