@@ -1,18 +1,60 @@
-# Plugin template
+# Documentation du plugin JourFerie pour Jeedom
 
-Ce "template de plugin" sert de base à la réalisation de plugins pour **Jeedom**.
+## Présentation
 
-La documentation générale relative à la conception de plugin est consultable [ici](https://doc.jeedom.com/fr_FR/dev/).
+Le plugin **JourFerie** permet de savoir automatiquement si aujourd’hui est un jour férié ou une période de vacances scolaires, selon la région et la zone académique configurées. Il s’appuie sur des APIs publiques pour obtenir ces informations.
 
-Dans le détail :   
-* [Utilisation du template de plugin](https://doc.jeedom.com/fr_FR/dev/plugin_template) : Le template de plugin est une base de plugin pour Jeedom qui doit être adaptée avec l'id de votre plugin et à laquelle il suffit d'ajouter vos propres fonctions.
+---
 
-* [Fichier info.json](https://doc.jeedom.com/fr_FR/dev/structure_info_json) : Intégré depuis la version 3.0 de Jeedom, le fichier **info.json** est obligatoire pour le bon fonctionnement des plugins et leur bon déploiement sur le Market Jeedom.
+## Installation
 
-* [Icône du plugin](https://doc.jeedom.com/fr_FR/dev/Icone_de_plugin) : Afin de pouvoir être publié sur le Market Jeedom, tout plugin doit disposer d’une icône. Attention à ne pas utiliser le même code couleur que les icônes des plugins Jeedom officiels.
+1. Installez le plugin depuis le market Jeedom.
+2. Activez-le dans la gestion des plugins.
 
-* [Widget du plugin](https://doc.jeedom.com/fr_FR/dev/widget_plugin) : Présentation des différentes manières d'inclure des widgets personnalisés au plugin.
+---
 
-* [Documentation du plugin](https://doc.jeedom.com/fr_FR/dev/documentation_plugin) : Présentation de la mise en place d'une documentation car un bon plugin n'est rien sans documentation adéquate.
+## Configuration
 
-* [Publication du plugin](https://doc.jeedom.com/fr_FR/dev/publication_plugin) : Description des pré-requis indispensables à la publication du plugin.
+### Création d’un équipement
+
+- Depuis la page du plugin, cliquez sur **Ajouter** pour créer un nouvel équipement.
+- Donnez un nom à l’équipement.
+
+### Paramètres de l’équipement
+
+- **Nom de l’équipement** : nom libre.
+- **Objet parent** : rattachez l’équipement à un objet Jeedom.
+- **Activer** : cochez pour activer l’équipement.
+- **Visible** : cochez pour le rendre visible sur le dashboard.
+- **Zone académique** : sélectionnez la zone pour les vacances scolaires (A, B ou C).
+- **Région pour jours fériés** : sélectionnez la région pour les jours fériés (Métropole, Alsace-Moselle, DOM-TOM, etc.).
+
+---
+
+## Fonctionnalités
+
+Deux commandes sont créées automatiquement :
+
+- **Jour férié** (`isHoliday`) : retourne 1 si aujourd’hui est un jour férié dans la région sélectionnée, sinon 0.
+- **Vacances scolaires** (`isVacation`) : retourne 1 si aujourd’hui est un jour de vacances scolaires dans la zone sélectionnée, sinon 0.
+
+Ces commandes sont de type `info` binaire et peuvent être utilisées dans vos scénarios, designs, ou autres automatisations.
+
+---
+
+## Utilisation
+
+- Ajoutez le widget de l’équipement sur votre dashboard pour visualiser l’état.
+- Utilisez les commandes dans vos scénarios pour adapter vos automatismes (ex : ne pas déclencher le réveil les jours fériés ou pendant les vacances).
+
+---
+
+## Mise à jour des données
+
+Les états sont mis à jour automatiquement chaque jour via le cron quotidien de Jeedom.
+
+---
+
+## Support
+
+Pour toute question ou problème, utilisez le forum Jeedom ou ouvrez un ticket sur le dépôt GitHub du plugin.
